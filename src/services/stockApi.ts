@@ -50,38 +50,43 @@ export async function fetchAllQuotes(): Promise<StockQuote[]> {
     .filter((r): r is PromiseFulfilledResult<StockQuote> => r.status === 'fulfilled')
     .map((r) => r.value);
 }
-export async function fetchCandles(symbol: string): Promise<import('../types/stock').CandleData[]> {
-  const base = import.meta.env.DEV
-    ? '/yahoo-finance'
-    : 'https://query1.finance.yahoo.com';
 
-  const url = `${base}/v8/finance/chart/${symbol}?interval=1d&range=3mo`;
+export function fetchCandles(symbol: string): Promise<import('../types/stock').CandleData[]> {
+  const seedPrices: Record<string, number> = {
+    AAPL: 169, MSFT: 378, GOOGL: 141, AMZN: 178, TSLA: 202,
+    NVDA: 485, META: 490, NFLX: 605, AMD: 168, INTC: 43,
+  };
 
-  const res = await fetch(url, {
-    headers: { 'Accept': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const seed = seedPrices[symbol] ?? 100;
+  const candles: import('../types/stock').CandleData[] = [];
 
-  const json = await res.json();
-  const result = json?.chart?.result?.[0];
-  if (!result) throw new Error('No data returned');
+  const now = new Date();
+  let price = seed;
 
-  const timestamps: number[] = result.timestamp;
-  const quote = result.indicators.quote[0];
+  for (let i = 90; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - i);
+    const dow = date.getDay();
+    if (dow === 0 || dow === 6) continue;
 
-  return timestamps.map((ts: number, i: number) => {
-    const d = new Date(ts * 1000);
-    return {
-      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      timestamp: ts * 1000,
-      open: quote.open[i],
-      high: quote.high[i],
-      low: quote.low[i],
-      close: quote.close[i],
-      volume: quote.volume[i],
-    };
-  }).filter((c: import('../types/stock').CandleData) =>
-    // Yahoo sometimes returns null candles for holidays
-    c.open != null && c.close != null
-  );
+    const change = price * (Math.random() * 0.04 - 0.018);
+    const open = price;
+    const close = Math.max(open + change, 1);
+    const high = Math.max(open, close) * (1 + Math.random() * 0.015);
+    const low = Math.min(open, close) * (1 - Math.random() * 0.015);
+
+    candles.push({
+      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      timestamp: date.getTime(),
+      open: parseFloat(open.toFixed(2)),
+      high: parseFloat(high.toFixed(2)),
+      low: parseFloat(low.toFixed(2)),
+      close: parseFloat(close.toFixed(2)),
+      volume: Math.floor(Math.random() * 80_000_000 + 20_000_000),
+    });
+
+    price = close;
+  }
+
+  return Promise.resolve(candles);
 }
