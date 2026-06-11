@@ -5,16 +5,16 @@ const BASE_URL = 'https://finnhub.io/api/v1';
 
 // Map of symbol → display name
 export const TRACKED_STOCKS: Record<string, string> = {
-  AAPL:  'Apple Inc.',
-  MSFT:  'Microsoft Corp.',
+  AAPL: 'Apple Inc.',
+  MSFT: 'Microsoft Corp.',
   GOOGL: 'Alphabet Inc.',
-  AMZN:  'Amazon.com Inc.',
-  TSLA:  'Tesla Inc.',
-  NVDA:  'NVIDIA Corp.',
-  META:  'Meta Platforms',
-  NFLX:  'Netflix Inc.',
-  AMD:   'Advanced Micro Devices',
-  INTC:  'Intel Corp.',
+  AMZN: 'Amazon.com Inc.',
+  TSLA: 'Tesla Inc.',
+  NVDA: 'NVIDIA Corp.',
+  META: 'Meta Platforms',
+  NFLX: 'Netflix Inc.',
+  AMD: 'Advanced Micro Devices',
+  INTC: 'Intel Corp.',
 };
 
 export async function fetchQuote(symbol: string): Promise<FinnhubQuoteResponse> {
@@ -49,4 +49,39 @@ export async function fetchAllQuotes(): Promise<StockQuote[]> {
   return results
     .filter((r): r is PromiseFulfilledResult<StockQuote> => r.status === 'fulfilled')
     .map((r) => r.value);
+}
+export async function fetchCandles(symbol: string): Promise<import('../types/stock').CandleData[]> {
+  const base = import.meta.env.DEV
+    ? '/yahoo-finance'
+    : 'https://query1.finance.yahoo.com';
+
+  const url = `${base}/v8/finance/chart/${symbol}?interval=1d&range=3mo`;
+
+  const res = await fetch(url, {
+    headers: { 'Accept': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+  const json = await res.json();
+  const result = json?.chart?.result?.[0];
+  if (!result) throw new Error('No data returned');
+
+  const timestamps: number[] = result.timestamp;
+  const quote = result.indicators.quote[0];
+
+  return timestamps.map((ts: number, i: number) => {
+    const d = new Date(ts * 1000);
+    return {
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      timestamp: ts * 1000,
+      open: quote.open[i],
+      high: quote.high[i],
+      low: quote.low[i],
+      close: quote.close[i],
+      volume: quote.volume[i],
+    };
+  }).filter((c: import('../types/stock').CandleData) =>
+    // Yahoo sometimes returns null candles for holidays
+    c.open != null && c.close != null
+  );
 }

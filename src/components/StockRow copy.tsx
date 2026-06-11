@@ -10,7 +10,6 @@ interface StockRowProps {
   rank: number;
 }
 
-
 const ChartPanel: React.FC<{ symbol: string }> = ({ symbol }) => {
   const { candles, loading, error } = useCandles(symbol);
 
@@ -60,7 +59,6 @@ const StockRow: React.FC<StockRowProps> = ({ stock, rank }) => {
   const badgeClass = getBadgeClass(stock.percentChange);
   const arrow = getArrow(stock.percentChange);
 
-  // Initials avatar color based on symbol
   const avatarColors = [
     'bg-blue-100 text-blue-700',
     'bg-violet-100 text-violet-700',
@@ -80,21 +78,21 @@ const StockRow: React.FC<StockRowProps> = ({ stock, rank }) => {
         onClick={() => setExpanded(e => !e)}
       >
         {/* Symbol + Name */}
-        <td className="px-6 py-4 row-indicator ${rowClass}">
-          <div className="flex items-center gap-3">
+        <td className="px-6 py-4 w-[240px]">
+          <div className="flex items-center gap-3 min-w-0">
             <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarClass}`}>
               {stock.symbol.slice(0, 2)}
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-slate-900 font-mono">{stock.symbol}</p>
-              <p className="text-xs text-slate-400 truncate max-w-[140px]">{stock.name}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-900 font-mono leading-snug">{stock.symbol}</p>
+              <p className="text-xs text-slate-400 truncate">{stock.name}</p>
             </div>
           </div>
         </td>
 
         {/* Price */}
         <td className="px-6 py-4 text-right">
-          <span className={`text-sm tabular-nums font-semibold ${stock.currentPrice > stock.previousClose ? 'text-emerald-700' : stock.currentPrice < stock.previousClose ? 'text-red-600' : 'text-slate-700'} font-mono`}>
+          <span className={`text-sm tabular-nums font-semibold font-mono ${stock.currentPrice > stock.previousClose ? 'text-emerald-700' : stock.currentPrice < stock.previousClose ? 'text-red-600' : 'text-slate-700'}`}>
             {formatPrice(stock.currentPrice)}
           </span>
         </td>
@@ -107,10 +105,12 @@ const StockRow: React.FC<StockRowProps> = ({ stock, rank }) => {
         </td>
 
         {/* Change % badge */}
-        <td className="px-6 py-4 text-right">
-          <span className={badgeClass}>
-            {arrow} {formatPercent(Math.abs(stock.percentChange)).replace('+', '').replace('-', '')}
-          </span>
+        <td className="px-6 py-4">
+          <div className="flex justify-end">
+            <span className={badgeClass}>
+              {arrow} {formatPercent(Math.abs(stock.percentChange)).replace('+', '').replace('-', '')}
+            </span>
+          </div>
         </td>
 
         {/* High */}
@@ -139,6 +139,7 @@ const StockRow: React.FC<StockRowProps> = ({ stock, rank }) => {
         </td>
       </tr>
 
+      {/* Expanded chart row */}
       {expanded && (
         <tr className="bg-white border-b border-slate-200 animate-fade-in">
           <td colSpan={8} className="px-8 py-6">

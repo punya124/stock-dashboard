@@ -12,15 +12,35 @@ export interface StockQuote {
 }
 
 export interface FinnhubQuoteResponse {
-  c: number;  // current price
-  d: number;  // change
-  dp: number; // percent change
-  h: number;  // high
-  l: number;  // low
-  o: number;  // open
-  pc: number; // previous close
-  t: number;  // timestamp
+  c: number;
+  d: number;
+  dp: number;
+  h: number;
+  l: number;
+  o: number;
+  pc: number;
+  t: number;
 }
 
 export type SortKey = 'symbol' | 'currentPrice' | 'change' | 'percentChange';
 export type SortDir = 'asc' | 'desc';
+
+export interface CandleData {
+  date: string;
+  timestamp: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface FinnhubCandleResponse {
+  o: number[];
+  h: number[];
+  l: number[];
+  c: number[];
+  v: number[];
+  t: number[];
+  s: string;
+}
